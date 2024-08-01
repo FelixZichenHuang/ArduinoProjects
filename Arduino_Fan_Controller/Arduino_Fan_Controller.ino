@@ -47,7 +47,9 @@ int buttonThreePreviousState = 0;
 int buttonFourState;
 int buttonFourPreviousState = 0;
 bool fanOn = false;
-unsigned long fanOnTime;
+unsigned long previousMillis = 0;
+unsigned long currentMillis;
+unsigned long fanOnTime = 0;
 
 void setup() {
   pinMode(trigPort, OUTPUT);
@@ -123,11 +125,11 @@ void homeMode() {
   }
   if (distance <= maximumDistance) {
     if (temperatureUnitMode == 1 && temperature >= maximumTemperatureCelcius) {
-      fanOnTime = millis();
+      currentMillis = millis();
       digitalWrite(fanPort, HIGH);
       fanOn = true;
     } else if (temperatureUnitMode == 2 && temperature >= maximumTemperatureFarenheit) {
-      fanOnTime = millis();
+      currentMillis = millis();
       digitalWrite(fanPort, HIGH);
       fanOn = true;
     } else {
@@ -135,8 +137,12 @@ void homeMode() {
       fanOn = false;
     }
   } else {
-    digitalWrite(fanPort, LOW);
-    fanOn = false;
+    if (fanOn == true) {
+      fanOnTime += currentMillis - previousMillis;
+      previousMillis = currentMillis;
+      digitalWrite(fanPort, LOW);
+      fanOn = false;
+    }
   }
   buttonTwoState = digitalRead(buttonTwoPin);
   lcd.setCursor(0, 0);
@@ -203,7 +209,7 @@ void powerConsumptionMonitoringMode() {
   lcd.setCursor(0, 0);
   lcd.print("Power Consumed: ");
   lcd.setCursor(0, 1);
-  lcd.print(fanOnTime / 1000 * 3.5 * 0.06);
+  lcd.print(fanOnTime / 1000 * 5 * 0.02);
   lcd.print(" J");
   delay(100);
 }
